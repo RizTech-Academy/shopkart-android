@@ -4,7 +4,9 @@ Android client for the [ShopKart API](https://github.com/RizTech-Academy/shopkar
 
 Kotlin, Jetpack Compose, multi-module, with the dependency rule enforced by the build graph rather than by convention.
 
-> **Status: in progress.** The domain layer is complete and tested. The data, design-system, feature and app modules are being built. What is here is finished work, not scaffolding — see [Progress](#progress).
+> **Status: complete and running.** All six modules are built, 35 tests pass, and the
+> app has been run end to end against the live API — browse, search, filter, open a
+> product, add to basket, change quantities, check out.
 
 ---
 
@@ -91,36 +93,72 @@ called — and they do not break every time the implementation is refactored.
 
 ---
 
-## Progress
+## What is built
 
-**Done — `:core:domain`, 21 tests passing**
+All six modules, **35 tests passing**.
 
-| Area | Covered |
+| Module | Contains |
 | --- | --- |
-| `Money` | exact integer arithmetic, negative and non-integer rejection, ordering |
-| `Cart` | subtotal across quantities, item counts, invalid line rejection |
-| Cart use cases | add, increment on re-add, out-of-stock refusal, zero-removes, observation |
-| `PlaceOrderUseCase` | totals, cart emptied on success, empty-cart rejection |
+| `:core:domain` | Models, repository interfaces, use cases. Pure Kotlin — 21 tests |
+| `:core:data` | Retrofit, Room, mappers, repository implementations, Hilt modules — 14 tests |
+| `:core:designsystem` | Material 3 theme, money formatting, product card, quantity stepper, loading/error/empty states |
+| `:feature:catalog` | Product list with debounced search, category and sort filters; product detail |
+| `:feature:cart` | Basket, quantity editing, checkout |
+| `:app` | Navigation, application class, DI entry point |
 
-**In progress — `:core:data`**
-Retrofit service, DTOs, Room entities and DAOs are written. Repository implementations,
-mappers and DI wiring remain.
+### Decisions worth defending
 
-**Not started**
-`:core:designsystem`, `:feature:catalog`, `:feature:cart`, `:app`, and the Robolectric
-integration tests (real Room, real Retrofit against MockWebServer).
+**One transaction per logical change.** `addItem` writes the product row and the cart
+row, and the cart query joins the two. Without a transaction Room invalidates after the
+first write and emits a cart that does not yet contain the item just added — every
+observer briefly renders a stale basket. There is a test that fails without the
+transaction.
+
+**A search never overwrites the offline cache.** Only an unfiltered fetch replaces the
+cached catalogue. Otherwise going offline after searching for "keyboard" leaves one
+product as your entire catalogue. There is a test pinning this too.
+
+**Order lines snapshot the product; cart lines join to it.** A basket must show today's
+price. A past order must show what was actually paid, even after the product changes or
+is withdrawn.
+
+**Failures are an enum, not an exception.** `DataError.Network` and `DataError.NotFound`
+are different things to a user, and `DataResult` makes the caller handle both. Wording
+lives in the ViewModel, where it can be localised — not in the data layer.
+
+**`ignoreUnknownKeys` on the JSON.** Without it the server cannot add a field without
+breaking every installed app. A test feeds the client a field it has never heard of.
+
+**No `fallbackToDestructiveMigration`.** Silently wiping a user's basket on upgrade is a
+data-loss bug that only appears in production. A missing migration should fail loudly in
+development instead.
+
+**Cleartext HTTP only for loopback.** `10.0.2.2` and `localhost` are permitted so the
+emulator can reach a local API; everything else requires HTTPS, including in debug. A
+blanket `cleartextTrafficPermitted="true"` is how a development convenience ships.
 
 ---
 
 ## Testing approach
 
-Unit tests run on the JVM. Integration tests will use **Robolectric** rather than
+Unit tests run on the JVM. Integration tests use **Robolectric** rather than
 instrumented tests, so they exercise a real Room database and real Retrofit against
 MockWebServer while still running in CI without an emulator.
 
 ```bash
-./gradlew :core:domain:test    # domain rules
-./gradlew test                 # everything, once the modules land
+./gradlew :core:domain:test            # domain rules, 21 tests
+./gradlew :core:data:testDebugUnitTest # repositories against real Room + MockWebServer, 14 tests
+./gradlew test                         # everything
+```
+
+Repository tests use MockWebServer rather than a mocked Retrofit interface, because the
+thing most likely to break is the JSON contract and a mocked interface cannot catch that.
+Room runs in memory rather than behind a mocked DAO, for the same reason.
+
+### Running the app against a local API
+
+```bash
+./gradlew :app:installDebug -Pshopkart.baseUrl=http://10.0.2.2:3000/
 ```
 
 ---

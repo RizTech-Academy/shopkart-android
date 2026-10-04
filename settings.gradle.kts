@@ -10,9 +10,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "ShopKart"
 
-// include(":app")   // not built yet
+include(":app")
 include(":core:domain")
 include(":core:data")
-// include(":core:designsystem")   // not built yet
-// include(":feature:catalog")   // not built yet
-// include(":feature:cart")   // not built yet
+include(":core:designsystem")
+include(":feature:catalog")
+include(":feature:cart")
