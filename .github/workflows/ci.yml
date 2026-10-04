@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Pure-Kotlin domain rules. They need no Android framework at all, so
+      # running them separately makes it obvious when a failure is business
+      # logic rather than anything to do with the platform.
+      - name: Domain tests
+        run: ./gradlew :core:domain:test
+
+      # Repositories against a real in-memory Room database and real Retrofit
+      # over MockWebServer, via Robolectric - no emulator, so this runs in CI.
+      - name: Data tests
+        run: ./gradlew :core:data:testDebugUnitTest
+
+      - name: All unit tests
+        run: ./gradlew test
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug
+
+      # Keeping the reports makes a red build diagnosable without re-running it
+      # locally and hoping it fails the same way.
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/**'
+          retention-days: 7
