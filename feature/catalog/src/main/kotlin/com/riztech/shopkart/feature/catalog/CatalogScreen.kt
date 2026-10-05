@@ -41,9 +41,9 @@ import com.riztech.shopkart.domain.repository.ProductSort
 private data class Promo(val category: String, val title: String, val body: String, val colors: List<Color>)
 
 private val PROMOS = listOf(
-    Promo("audio", "Sound that moves with you", "Headphones, speakers and studio mics", listOf(BrandColors.Indigo, Color(0xFF7B5CFF))),
-    Promo("kitchen", "Better coffee at home", "Grinders, pour-over and cast iron", listOf(BrandColors.Coral, Color(0xFFFFA24A))),
-    Promo("outdoors", "Ready for the trail", "Packs, bottles and light for camp", listOf(BrandColors.Mint, Color(0xFF0E7C8C))),
+    Promo("audio", "Sound that moves with you", "Headphones, speakers and studio mics", listOf(BrandColors.Primary, Color(0xFFB27A4B))),
+    Promo("kitchen", "Better coffee at home", "Grinders, pour-over and cast iron", listOf(BrandColors.Accent, Color(0xFFE6A456))),
+    Promo("outdoors", "Ready for the trail", "Packs, bottles and light for camp", listOf(BrandColors.Mint, Color(0xFF7C8B4A))),
 )
 
 @Composable
@@ -182,7 +182,7 @@ private fun Header(cartCount: Int, onCartClick: () -> Unit) {
                 BadgedBox(
                     badge = {
                         if (cartCount > 0) {
-                            Badge(containerColor = BrandColors.Coral) { Text(cartCount.toString()) }
+                            Badge(containerColor = BrandColors.Accent) { Text(cartCount.toString()) }
                         }
                     },
                 ) {

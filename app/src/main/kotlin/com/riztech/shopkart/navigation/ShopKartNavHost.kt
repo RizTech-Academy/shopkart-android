@@ -124,7 +124,7 @@ private fun BottomBar(route: String?, cartCount: Int, navController: NavHostCont
             icon = {
                 BadgedBox(
                     badge = {
-                        if (cartCount > 0) Badge(containerColor = BrandColors.Coral) { Text(cartCount.toString()) }
+                        if (cartCount > 0) Badge(containerColor = BrandColors.Accent) { Text(cartCount.toString()) }
                     },
                 ) {
                     Icon(

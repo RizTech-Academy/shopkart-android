@@ -111,7 +111,7 @@ fun ProductDetailScreen(
                 BadgedBox(
                     badge = {
                         if (state.cartItemCount > 0) {
-                            Badge(containerColor = BrandColors.Coral) { Text(state.cartItemCount.toString()) }
+                            Badge(containerColor = BrandColors.Accent) { Text(state.cartItemCount.toString()) }
                         }
                     },
                 ) {

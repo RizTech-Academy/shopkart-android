@@ -68,7 +68,7 @@ fun ProductCard(
                     modifier = Modifier
                         .padding(14.dp)
                         .background(
-                            if (badge == ProductBadge.TopRated) BrandColors.Indigo else BrandColors.Coral,
+                            if (badge == ProductBadge.TopRated) BrandColors.Primary else BrandColors.Accent,
                             RoundedCornerShape(50),
                         )
                         .padding(horizontal = 8.dp, vertical = 3.dp),
