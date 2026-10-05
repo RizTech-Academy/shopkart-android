@@ -116,6 +116,7 @@ private fun BottomBar(route: String?, cartCount: Int, navController: NavHostCont
             onClick = { navController.switchTab(Routes.CATALOG) },
             icon = { Icon(if (route == Routes.CATALOG) Icons.Filled.Home else Icons.Outlined.Home, contentDescription = null) },
             label = { Text("Home") },
+            colors = itemColors(),
         )
         NavigationBarItem(
             selected = route == Routes.CART,
@@ -133,9 +134,17 @@ private fun BottomBar(route: String?, cartCount: Int, navController: NavHostCont
                 }
             },
             label = { Text("Basket") },
+            colors = itemColors(),
         )
     }
 }
+
+@Composable
+private fun itemColors() = NavigationBarItemDefaults.colors(
+    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+    selectedIconColor = MaterialTheme.colorScheme.primary,
+    selectedTextColor = MaterialTheme.colorScheme.primary,
+)
 
 /**
  * Tab switching that does not pile up copies of the same screen: pop back to

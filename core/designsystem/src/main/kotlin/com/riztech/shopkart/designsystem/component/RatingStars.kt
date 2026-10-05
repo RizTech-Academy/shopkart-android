@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.riztech.shopkart.designsystem.theme.BrandColors
 import com.riztech.shopkart.domain.model.Rating
-import kotlin.math.floor
+import kotlin.math.roundToInt
 
 /**
  * Five stars plus the average and the number of ratings.
@@ -41,8 +41,11 @@ fun RatingStars(
         },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val full = floor(rating.average).toInt()
-        val half = rating.average - full >= 0.5
+        // Rounded to the nearest half star, the way a reader rounds: 4.9 is
+        // five stars, 4.3 is four and a half, 4.2 is four.
+        val halves = (rating.average * 2).roundToInt()
+        val full = halves / 2
+        val half = halves % 2 == 1
         repeat(5) { index ->
             val icon = when {
                 index < full -> Icons.Filled.Star

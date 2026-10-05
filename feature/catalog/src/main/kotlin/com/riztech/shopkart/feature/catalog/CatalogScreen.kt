@@ -198,7 +198,7 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit) {
     TextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text("Search headphones, coffee, jackets…") },
+        placeholder = { Text("Search products", maxLines = 1) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             if (value.isNotEmpty()) {
@@ -341,6 +341,7 @@ private fun CategoryTile(name: String, slug: String?, selected: Boolean, onSelec
         Text(
             name,
             style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         )

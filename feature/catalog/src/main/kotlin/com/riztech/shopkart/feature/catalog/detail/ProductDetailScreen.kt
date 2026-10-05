@@ -1,5 +1,6 @@
 package com.riztech.shopkart.feature.catalog.detail
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,7 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,6 +68,11 @@ fun ProductDetailScreen(
             }
         },
     ) { padding ->
+        // Shared with the top bar, which turns solid once the photo has scrolled
+        // away, so the title never slides underneath the floating buttons.
+        val scroll = rememberScrollState()
+        val photoGone = with(LocalDensity.current) { scroll.value > (LocalConfiguration.current.screenWidthDp.dp - 96.dp).toPx() }
+
         Box(Modifier.padding(padding)) {
             when {
                 state.isLoading -> LoadingState()
@@ -75,6 +85,7 @@ fun ProductDetailScreen(
                         product = product,
                         related = state.related,
                         onProductClick = onProductClick,
+                        scroll = scroll,
                     )
                 }
             }
@@ -82,11 +93,21 @@ fun ProductDetailScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
+                    .background(if (photoGone) MaterialTheme.colorScheme.surface else Color.Transparent)
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 RoundIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", onBack)
+                Text(
+                    if (photoGone) state.product?.title.orEmpty() else "",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp),
+                )
                 BadgedBox(
                     badge = {
                         if (state.cartItemCount > 0) {
@@ -115,8 +136,13 @@ private fun RoundIconButton(icon: ImageVector, description: String, onClick: () 
 }
 
 @Composable
-private fun ProductContent(product: Product, related: List<Product>, onProductClick: (String) -> Unit) {
-    Column(Modifier.verticalScroll(rememberScrollState())) {
+private fun ProductContent(
+    product: Product,
+    related: List<Product>,
+    onProductClick: (String) -> Unit,
+    scroll: ScrollState,
+) {
+    Column(Modifier.verticalScroll(scroll)) {
         ProductImage(
             url = product.imageUrl,
             modifier = Modifier
@@ -172,6 +198,7 @@ private fun ProductContent(product: Product, related: List<Product>, onProductCl
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Perk(Icons.Outlined.CloudDone, "Saved for offline", "Browse this page again without a connection.")
