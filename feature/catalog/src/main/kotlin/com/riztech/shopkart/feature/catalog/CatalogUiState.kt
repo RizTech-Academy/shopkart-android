@@ -26,4 +26,14 @@ data class CatalogUiState(
     val isEmpty: Boolean get() = !isLoading && errorMessage == null && products.isEmpty()
 
     val hasActiveFilter: Boolean get() = search.isNotBlank() || selectedCategory != null
+
+    /** The best-reviewed products in stock, for the carousel on the unfiltered home screen. */
+    val topRated: List<Product>
+        get() = if (hasActiveFilter) {
+            emptyList()
+        } else {
+            products.filter { it.inStock && it.rating.count >= 100 }
+                .sortedByDescending { it.rating.average }
+                .take(6)
+        }
 }

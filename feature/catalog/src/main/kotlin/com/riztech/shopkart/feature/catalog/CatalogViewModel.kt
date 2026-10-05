@@ -2,9 +2,12 @@ package com.riztech.shopkart.feature.catalog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riztech.shopkart.domain.model.Product
 import com.riztech.shopkart.domain.repository.CartRepository
 import com.riztech.shopkart.domain.repository.ProductFilter
 import com.riztech.shopkart.domain.repository.ProductSort
+import com.riztech.shopkart.domain.usecase.AddToCartResult
+import com.riztech.shopkart.domain.usecase.AddToCartUseCase
 import com.riztech.shopkart.domain.usecase.GetCategoriesUseCase
 import com.riztech.shopkart.domain.usecase.GetProductsUseCase
 import com.riztech.shopkart.domain.util.DataError
@@ -12,6 +15,7 @@ import com.riztech.shopkart.domain.util.DataResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -20,11 +24,16 @@ import kotlinx.coroutines.launch
 class CatalogViewModel @Inject constructor(
     private val getProducts: GetProductsUseCase,
     private val getCategories: GetCategoriesUseCase,
+    private val addToCart: AddToCartUseCase,
     cartRepository: CartRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CatalogUiState())
     val state: StateFlow<CatalogUiState> = _state.asStateFlow()
+
+    /** One-shot confirmations for the snackbar; a Channel so rotation does not replay them. */
+    private val _messages = Channel<String>(Channel.BUFFERED)
+    val messages: Flow<String> = _messages.receiveAsFlow()
 
     /** Drives the search; separate so it can be debounced without lagging the field. */
     private val query = MutableStateFlow(ProductFilter())
@@ -68,6 +77,19 @@ class CatalogViewModel @Inject constructor(
     fun onSortSelected(sort: ProductSort) {
         _state.update { it.copy(sort = sort) }
         query.update { it.copy(sort = sort) }
+    }
+
+    /** Quick add from the grid. The use case still owns the stock rule. */
+    fun onAddToCart(product: Product) {
+        viewModelScope.launch {
+            _messages.send(
+                when (addToCart(product, quantity = 1)) {
+                    AddToCartResult.Added -> "${product.title} added to basket"
+                    AddToCartResult.OutOfStock -> "That item is out of stock"
+                    AddToCartResult.InvalidQuantity -> "That quantity is not valid"
+                },
+            )
+        }
     }
 
     fun retry() {
